@@ -30,12 +30,12 @@ spec:
           imagePullPolicy: Always
           volumeMounts:
             - name: gmod-volume
-              mountPath: /data
+              mountPath: /steamgames
           terminationMessagePolicy: File
           image: 'steamcmd/steamcmd:latest'
           args:
             - +force_install_dir
-            - /data
+            - /steamgames
             - +login
             - anonymous
             - +app_update
