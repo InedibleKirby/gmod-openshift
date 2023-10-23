@@ -27,8 +27,8 @@ echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27
 
 #echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode terrortown -maxplayers 20 +host_workshop_collection 681278863" > /steamgames/gmod/tttstart.sh
 
-
+#Cd to correct folder
 cd /steamgames/gmod/
 #Kickoff launch script file
 source ./sandboxstart.sh
-#source /steamgames/gmod/tttstart.sh
+#source ./tttstart.sh
