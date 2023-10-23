@@ -32,6 +32,7 @@ RUN ln -s /usr/games/steamcmd /usr/bin/steamcmd
 RUN steamcmd +quit
 
 # Set default command
-RUN steamcmd +force_install_dir /data +login anonymous +app_update 4020 +app_update 232330 +quit
+RUN steamcmd +force_install_dir /data/gmod +login anonymous +app_update 4020 +quit
+RUN steamcmd +force_install_dir /data/css +login anonymous +app_update 232330 +quit
 # RUN sed -i 's|"cstrike"	"C:\steamcmd\steamapps\common\Counter-Strike Source Dedicated Server\cstrike"|"cstrike" "/data/gmod/content/css/cstrike" /data/garrysmod/cfg/mount.cfg 
 # Script/next steps to launch server
