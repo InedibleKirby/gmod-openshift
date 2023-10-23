@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #Find and replace CSS mounting config
-sed -i 's|"cstrike"	"C:\steamcmd\steamapps\common\Counter-Strike Source Dedicated Server\cstrike"|"cstrike" "/data/css/cstrike" /data/gmod/garrysmod/cfg/mount.cfg'
+sed -i 's|"cstrike"	"C:\steamcmd\steamapps\common\Counter-Strike Source Dedicated Server\cstrike"|"cstrike" "/data/css/cstrike"' /data/gmod/garrysmod/cfg/mount.cfg
 
 #Create server launch script file
 echo "/data/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20" > /data/gmod/sandboxstart.sh
