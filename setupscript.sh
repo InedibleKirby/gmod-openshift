@@ -23,7 +23,6 @@ cat << EOF > /steamgames/gmod/garrysmod/cfg/mountdepots.txt
 EOF
 
 #Create server launch script file
-touch /steamgames/gmod/sandboxstart.sh
 echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20" > /steamgames/gmod/sandboxstart.sh
 
 #echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode terrortown -maxplayers 20 +host_workshop_collection 681278863" > /steamgames/gmod/tttstart.sh
