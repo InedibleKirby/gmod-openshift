@@ -22,13 +22,19 @@ cat << EOF > /steamgames/gmod/garrysmod/cfg/mountdepots.txt
 }
 EOF
 
+#Cd to correct folder
+cd /steamgames/gmod/
+chmod +777 srcds_run
+chmod +777 srcds_linux
+chmod +777 sandboxstart.sh
+
 #Create server launch script file
-echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20" > /steamgames/gmod/sandboxstart.sh
+srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20 +map gm_construct
 
 #echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode terrortown -maxplayers 20 +host_workshop_collection 681278863" > /steamgames/gmod/tttstart.sh
 
-#Cd to correct folder
-cd /steamgames/gmod/
+
+
 #Kickoff launch script file
-source ./sandboxstart.sh
+#source ./sandboxstart.sh
 #source ./tttstart.sh
