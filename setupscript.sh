@@ -30,5 +30,3 @@ echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27
 #Kickoff launch script file
 source /steamgames/gmod/sandboxstart.sh
 #source /steamgames/gmod/tttstart.sh
-
-sleep 5000000
