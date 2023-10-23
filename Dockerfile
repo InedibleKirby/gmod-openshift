@@ -40,6 +40,6 @@ RUN steamcmd +force_install_dir /steamgames/gmod +login anonymous +app_update 40
 
 # RUN sed -i 's|"cstrike"	"C:\steamcmd\steamapps\common\Counter-Strike Source Dedicated Server\cstrike"|"cstrike" "/steamgames/css/cstrike" /steamgames/gmod/garrysmod/cfg/mount.cfg'
 # RUN echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20" > /steamgames/gmod/sandboxstart.sh
-# RUN echo "/steamgames/gmod/srcds_run -console -game ttt -tickrate 100 -port 27015 -maxplayers 20 +host_workshop_collection 681278863" > /steamgames/gmod/tttstart.sh
+# RUN echo "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode terrortown -maxplayers 20 +host_workshop_collection 681278863" > /steamgames/gmod/tttstart.sh
 
 # RUN /steamgames/gmod/sandboxstart.sh
