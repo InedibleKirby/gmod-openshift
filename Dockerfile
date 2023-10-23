@@ -37,6 +37,7 @@ RUN steamcmd +force_install_dir /data/css +login anonymous +app_update 232330 +q
 RUN sed -i 's|"cstrike"	"C:\steamcmd\steamapps\common\Counter-Strike Source Dedicated Server\cstrike"|"cstrike" "/data/css/cstrike" /data/gmod/garrysmod/cfg/mount.cfg'
 
 # Script/next steps to launch server
+# Here we handle any .cfg changes, server password, server name, rcon stuff in this section.
 
 # RUN echo "/data/gmod/srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20" > /data/gmod/sandboxstart.sh
 # RUN echo "/data/gmod/srcds_run -console -game ttt -tickrate 100 -port 27015 -maxplayers 20 +host_workshop_collection 681278863" > /data/gmod/tttstart.sh
