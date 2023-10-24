@@ -1,5 +1,9 @@
 #!/bin/bash
 
+dpkg --add-architecture i386
+apt update
+apt-get lib32gcc1 libstdc++6 libstdc++6:i386 lib32tinfo5 ncurses-libs.i686ls
+
 #Replace mounting config
 cat << EOF > /steamgames/gmod/garrysmod/cfg/mount.cfg
 "mountcfg"
@@ -21,9 +25,6 @@ cat << EOF > /steamgames/gmod/garrysmod/cfg/mountdepots.txt
 	"lostcoast"	"0"
 }
 EOF
-
-useradd server
-su - server
 
 #Cd to correct folder
 cd /steamgames/gmod/
