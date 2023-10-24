@@ -12,4 +12,4 @@ COPY setupscript.sh /setupscript.sh
 RUN chmod +x /setupscript.sh
 
 # Set the script as the default command
-CMD ["/setupscript.sh"]
+CMD [./srcds_run "-console -game garrysmod -tickrate 64 -port 27015 +gamemode sandbox -maxplayers 20 +map gm_construct"]
