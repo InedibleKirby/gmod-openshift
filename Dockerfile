@@ -13,4 +13,4 @@ COPY setupscript.sh /setupscript.sh
 RUN chmod +x /setupscript.sh
 
 # Set the script as the default command
-CMD [tmux new-session -d -s "gmod-server" "/steamgames/gmod/srcds_run", "-console", "-game", "garrysmod", "-tickrate", "64", "-port", "27015", "+gamemode", "sandbox", "-maxplayers", "20", "+map", "gm_construct"]
+CMD [tmux new-session -d -s "gmod-server" "/steamgames/gmod/srcds_run -console -game garrysmod -tickrate 64 -port 27015 +gamemode sandbox -maxplayers 20 +map gm_construct"]
