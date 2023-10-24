@@ -22,6 +22,9 @@ cat << EOF > /steamgames/gmod/garrysmod/cfg/mountdepots.txt
 }
 EOF
 
+useradd server
+su - server
+
 #Cd to correct folder
 cd /steamgames/gmod/
 chmod +777 srcds_run
