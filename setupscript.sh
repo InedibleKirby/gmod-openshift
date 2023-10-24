@@ -2,7 +2,7 @@
 
 dpkg --add-architecture i386
 apt update
-apt-get install libstdc++6:i386
+apt-get install libstdc++6:i386 -y
 
 #Replace mounting config
 cat << EOF > /steamgames/gmod/garrysmod/cfg/mount.cfg
