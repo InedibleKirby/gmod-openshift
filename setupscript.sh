@@ -24,9 +24,6 @@ EOF
 
 #Cd to correct folder
 cd /steamgames/gmod/
-chmod +777 srcds_run
-chmod +777 srcds_linux
-chmod +777 sandboxstart.sh
 
 #Create server launch script file
 ./srcds_run -console -game garrysmod -tickrate 100 -port 27015 +gamemode sandbox -maxplayers 20 +map gm_construct
