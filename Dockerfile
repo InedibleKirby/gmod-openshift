@@ -1,5 +1,6 @@
 FROM ubuntu:latest
 
+RUN apt-get update -y
 RUN apt-get install software-properties-common -y
 RUN add-apt-repository multiverse -y
 RUN apt-get install lib32gcc-s1 -y
