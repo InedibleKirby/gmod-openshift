@@ -1,14 +1,23 @@
 #!/bin/bash
 
+function display_help() {
+    echo "Usage: buildstorage [OPTIONS]"
+    echo
+    echo "Create a PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
+    echo
+    echo "Options:"
+    echo "  -n, --name NAME       Name for the PV and PVC. The created PV will have '-pv' appended, and the PVC will have '-pvc' appended."
+    echo "  -s, --size SIZE       Size for the PV and PVC (e.g., 50Gi)."
+    echo "  -h, --help            Display this help message and exit."
+    echo
+    echo "Example:"
+    echo "  buildstorage --name myresource --size 50Gi"
+    exit 0
+}
+
 # Default values
 NAME=""
 SIZE=""
-
-# Check if oc command exists
-if ! command -v oc &> /dev/null; then
-    echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
-    exit 1
-fi
 
 # Trap to handle script interruptions
 trap "echo 'Script interrupted.'; exit 1" SIGINT SIGTERM
@@ -18,20 +27,27 @@ while [[ "$#" -gt 0 ]]; do
     case $1 in
         -n|--name) NAME="$2"; shift ;;
         -s|--size) SIZE=$(echo "$2" | tr '[:upper:]' '[:lower:]'); shift ;;
-        *) echo "Unknown parameter passed: $1"; echo "Usage: buildstorage --name/-n <name> --size/-s <size>"; exit 1 ;;
+        -h|--help) display_help ;;
+        *) echo "Unknown parameter passed: $1"; exit 1 ;;
     esac
     shift
 done
+
+# Check if oc command exists
+if ! command -v oc &> /dev/null; then
+    echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
+    exit 1
+fi
 
 # Validate inputs
 if [[ -z "${NAME}" && -z "${SIZE}" ]]; then
     echo "Usage: $0 --name <name> --size <size>"
     exit 1
 elif [[ -z "${NAME}" ]]; then
-    echo "Error: Missing name. Please provide a name using --name or -n flag."
+    echo "Error: Missing name. Please provide a name using --name or -n flag. Consult 'buildstorage -h' for more info."
     exit 1
 elif [[ -z "${SIZE}" ]]; then
-    echo "Error: Missing size. Please provide a size using --size or -s flag."
+    echo "Error: Missing size. Please provide a size using --size or -s flag. Consult 'buildstorage -h' for more info."
     exit 1
 fi
 
