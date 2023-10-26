@@ -81,7 +81,7 @@ spec:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   hostPath:
-    path: /data/${NAME}-volume  # This is an example using hostPath. Modify as needed.
+    path: /data  # This is an example using hostPath. Modify as needed.
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
