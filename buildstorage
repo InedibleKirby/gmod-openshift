@@ -74,14 +74,36 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: ${NAME}-pv
+  labels:
+    kubernetes.io/hostname: ac-1f-6b-73-2d-c7
+    storage.openshift.com/local-volume-owner-name: samsung
+    storage.openshift.com/local-volume-owner-namespace: openshift-local-storage
+    storage.openshift.com/owner-kind: LocalVolume
+    storage.openshift.com/owner-name: samsung
+    storage.openshift.com/owner-namespace: openshift-local-storage
+  annotations:
+    pv.kubernetes.io/provisioned-by: local-volume-provisioner-ac-1f-6b-73-2d-c7
+    storage.openshift.com/device-id: nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
+    storage.openshift.com/device-name: nvme0n1
 spec:
   capacity:
     storage: ${SIZE}
+  local:
+    path: /mnt/local-storage/foobar/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
+    fsType: ext4
   accessModes:
     - ReadWriteOnce
-  persistentVolumeReclaimPolicy: Retain
-  hostPath:
-    path: /data  # This is an example using hostPath. Modify as needed.
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: foobar
+  volumeMode: Filesystem
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ac-1f-6b-73-2d-c7
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -93,6 +115,9 @@ spec:
   resources:
     requests:
       storage: ${SIZE}
+  storageClassName: foobar
+  volumeName: ${NAME}-pv
+
 EOF
 
 echo "PV and PVC created successfully!"
