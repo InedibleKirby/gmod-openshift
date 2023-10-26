@@ -4,6 +4,15 @@
 NAME=""
 SIZE=""
 
+# Check if oc command exists
+if ! command -v oc &> /dev/null; then
+    echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
+    exit 1
+fi
+
+# Trap to handle script interruptions
+trap "echo 'Script interrupted.'; exit 1" SIGINT SIGTERM
+
 # Parse command line arguments
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -68,8 +77,26 @@ else
     exit 1
 fi
 
-# Create PV and PVC using oc command
-oc apply -f - <<EOF
+# Check if the provided storage class exists
+if ! oc get sc foobar &> /dev/null; then
+    echo "Error: The 'foobar' storage class does not exist in the cluster."
+    exit 1
+fi
+
+# Check if a PV with the given name already exists
+if oc get pv "${NAME}-pv" &> /dev/null; then
+    echo "Error: A PersistentVolume with the name '${NAME}-pv' already exists."
+    exit 1
+fi
+
+# Check if a PVC with the given name already exists
+if oc get pvc "${NAME}-pvc" &> /dev/null; then
+    echo "Error: A PersistentVolumeClaim with the name '${NAME}-pvc' already exists."
+    exit 1
+fi
+
+# Create PV and PVC using oc command and handle potential errors
+if ! OUTPUT=$(oc apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -119,5 +146,10 @@ spec:
   volumeName: ${NAME}-pv
 
 EOF
+); then
+    echo "Error applying the configuration:"
+    echo "${OUTPUT}"
+    exit 1
+fi
 
 echo "PV and PVC created successfully!"
