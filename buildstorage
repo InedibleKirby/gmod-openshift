@@ -1,23 +1,28 @@
 #!/bin/bash
 
-# Check if enough arguments are passed
-if [ "$#" -ne 2 ]; then
-    echo "Usage: $0 <name> <size>"
-    exit 1
-fi
+# Default values
+NAME=""
+SIZE=""
 
-NAME=$1
-SIZE=$(echo "$2" | tr '[:upper:]' '[:lower:]')  # Convert to lowercase
-
-# Check if oc command exists
-if ! command -v oc &> /dev/null; then
-    echo "Error: 'oc' command not found. Please ensure you have the OpenShift CLI installed."
-    exit 1
-fi
+# Parse command line arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        -n|--name) NAME="$2"; shift ;;
+        -s|--size) SIZE=$(echo "$2" | tr '[:upper:]' '[:lower:]'); shift ;;
+        *) echo "Unknown parameter passed: $1"; echo "Usage: buildstorage --name/-n <name> --size/-s <size>"; exit 1 ;;
+    esac
+    shift
+done
 
 # Check if user is logged into an OpenShift cluster
 if ! oc whoami &> /dev/null; then
     echo "Error: You are not logged into an OpenShift cluster. Please log in and try again."
+    exit 1
+fi
+
+# Validate inputs
+if [[ -z "${NAME}" || -z "${SIZE}" ]]; then
+    echo "Usage: buildstorage --name/-n <name> --size/-s <size>"
     exit 1
 fi
 
@@ -43,7 +48,7 @@ if [[ "${SIZE}" =~ ^([0-9]+)([kKmMgG])([iI]?)([bB]?)$ ]]; then
         [kK]|[kK][iI]|[kK][bB]) SIZE="${VALUE}Ki" ;;
         [mM]|[mM][iI]|[mM][bB]) SIZE="${VALUE}Mi" ;;
         [gG]|[gG][iI]|[gG][bB]) SIZE="${VALUE}Gi" ;;
-        *)
+        *) 
             echo "Invalid size unit."
             exit 1
             ;;
@@ -53,14 +58,8 @@ else
     exit 1
 fi
 
-# Ensure size doesn't exceed gigabytes
-if [[ "${SIZE}" =~ ^([0-9]+)Gi$ && ${BASH_REMATCH[1]} -gt 1024 ]]; then
-    echo "Size exceeds maximum allowed (1024Gi)."
-    exit 1
-fi
-
-# Create PV and PVC using oc command and check for success
-if ! oc apply -f - <<EOF
+# Create PV and PVC using oc command
+oc apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -85,9 +84,5 @@ spec:
     requests:
       storage: ${SIZE}
 EOF
-then
-    echo "Failed to create PV and PVC. Please check your OpenShift configuration or permissions."
-    exit 1
-fi
 
 echo "PV and PVC created successfully!"
