@@ -24,8 +24,14 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # Validate inputs
-if [[ -z "${NAME}" || -z "${SIZE}" ]]; then
-    echo "Usage: buildstorage --name/-n <name> --size/-s <size>"
+if [[ -z "${NAME}" && -z "${SIZE}" ]]; then
+    echo "Usage: $0 --name <name> --size <size>"
+    exit 1
+elif [[ -z "${NAME}" ]]; then
+    echo "Error: Missing name. Please provide a name using --name or -n flag."
+    exit 1
+elif [[ -z "${SIZE}" ]]; then
+    echo "Error: Missing size. Please provide a size using --size or -s flag."
     exit 1
 fi
 
