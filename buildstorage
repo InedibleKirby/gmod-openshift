@@ -178,6 +178,18 @@ EOF
 
 function process_resync_command() {
 
+    # If -h or --help flag is detected, display the help information and exit
+    if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+        echo "Usage: buildstorage resync [OPTIONS]"
+        echo ""
+        echo "Resynchronizes PVCs in the current namespace. For any PVC that doesn't have a bound PV, a new PV is created and the PVC is updated to bind to that PV."
+        echo ""
+        echo "Options:"
+        echo "  -h, --help    Display this help message and exit"
+        echo ""
+        return 0
+    fi
+
     # Get list of PVCs in the current namespace
     PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.volumeName}{"\n"}{end}')
 
