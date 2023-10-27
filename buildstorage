@@ -191,21 +191,21 @@ function process_resync_command() {
     fi
 
     # Get list of PVCs in the current namespace
-    PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.volumeName}{"\n"}{end}')
-
+    PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.accessModes} {.spec.volumeName} {"\n"}{end}')
     # Process each PVC
-    while read -r pvc_name pvc_size pvc_volume; do
+    while read -r pvc_name pvc_size pvc_access_mode pvc_volume; do   
         if [ -z "$pvc_volume" ]; then
-            echo "PVC $pvc_name does not have an associated PV. Creating a PV..."
+            echo "PVC $pvc_name does not have an associated PV. Attempting to create a PV..."
             
             # Create a PV for the PVC
             pv_name="${pvc_name}-pv"
-            create_pv_for_pvc $pv_name $pvc_size
-
-            # Update PVC with volumeName set to the new PV
-            oc patch pvc $pvc_name -p '{"spec":{"volumeName":"'$pv_name'"}}'
-
-            echo "PVC $pvc_name updated to bind to PV $pv_name."
+            if create_pv_for_pvc $pv_name $pvc_size $pvc_access_mode; then
+                # Update PVC with volumeName set to the new PV
+                oc patch pvc $pvc_name -p '{"spec":{"volumeName":"'$pv_name'"}}'
+                echo "PVC $pvc_name updated to bind to PV $pv_name."
+            else
+                echo "Failed to create PV for PVC $pvc_name. Skipping PVC update."
+            fi
         fi
     done <<< "$PVCs"
 }
@@ -213,6 +213,7 @@ function process_resync_command() {
 function create_pv_for_pvc() {
     local pv_name="$1"
     local pvc_size="$2"
+    local pvc_access_mode="$3"
 
     # Create a PV for the PVC with a specific label
     oc apply -f - <<EOF
@@ -226,23 +227,14 @@ spec:
   capacity:
     storage: $pvc_size
   accessModes:
-    - ReadWriteOnce
+    - ${pvc_access_mode[0]}
   persistentVolumeReclaimPolicy: Delete
   storageClassName: foobar
   local:
     path: /path/to/storage/directory
   volumeMode: Filesystem
-  nodeAffinity:
-    required:
-      nodeSelectorTerms:
-        - matchExpressions:
-            - key: kubernetes.io/hostname
-              operator: In
-              values:
-                - ac-1f-6b-73-2d-c7
 EOF
 }
-
 
 # Check if oc command exists
 if ! command -v oc &> /dev/null; then
