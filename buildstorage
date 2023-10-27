@@ -124,10 +124,10 @@ metadata:
   name: ${NAME}-pv
   labels:
     kubernetes.io/hostname: ac-1f-6b-73-2d-c7
-    storage.openshift.com/local-volume-owner-name: samsung
+    storage.openshift.com/local-volume-owner-name: foobar
     storage.openshift.com/local-volume-owner-namespace: openshift-local-storage
     storage.openshift.com/owner-kind: LocalVolume
-    storage.openshift.com/owner-name: samsung
+    storage.openshift.com/owner-name: foobar
     storage.openshift.com/owner-namespace: openshift-local-storage
   annotations:
     pv.kubernetes.io/provisioned-by: local-volume-provisioner-ac-1f-6b-73-2d-c7
@@ -177,6 +177,7 @@ EOF
 }
 
 function process_resync_command() {
+
     # Get list of PVCs in the current namespace
     PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.volumeName}{"\n"}{end}')
 
@@ -185,15 +186,30 @@ function process_resync_command() {
         if [ -z "$pvc_volume" ]; then
             echo "PVC $pvc_name does not have an associated PV. Creating a PV..."
             
-            # Create a PV for the PVC with a specific label
-            oc apply -f - <<EOF
+            # Create a PV for the PVC
+            pv_name="${pvc_name}-pv"
+            create_pv_for_pvc $pv_name $pvc_size
+
+            # Update PVC with volumeName set to the new PV
+            oc patch pvc $pvc_name -p '{"spec":{"volumeName":"'$pv_name'"}}'
+
+            echo "PVC $pvc_name updated to bind to PV $pv_name."
+        fi
+    done <<< "$PVCs"
+}
+
+function create_pv_for_pvc() {
+    local pv_name="$1"
+    local pvc_size="$2"
+
+    # Create a PV for the PVC with a specific label
+    oc apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: ${pvc_name}-pv
+  name: ${pv_name}
   labels:
     storage.openshift.com/local-volume-owner-name: foobar
-    intended-for-pvc: $pvc_name
 spec:
   capacity:
     storage: $pvc_size
@@ -213,10 +229,8 @@ spec:
               values:
                 - ac-1f-6b-73-2d-c7
 EOF
-
-        fi
-    done <<< "$PVCs"
 }
+
 
 # Check if oc command exists
 if ! command -v oc &> /dev/null; then
