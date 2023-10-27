@@ -1,124 +1,123 @@
 #!/bin/bash
 
 function display_help() {
-    echo "Usage: buildstorage [OPTIONS]"
-    echo
-    echo "Create a PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
-    echo
-    echo "Options:"
-    echo "  -n, --name NAME       Name for the PV and PVC. The created PV will have '-pv' appended, and the PVC will have '-pvc' appended."
-    echo "  -s, --size SIZE       Size for the PV and PVC (e.g., 50Gi)."
-    echo "  -h, --help            Display this help message and exit."
-    echo
-    echo "Example:"
-    echo "  buildstorage --name myresource --size 50Gi"
+    local command="$1"
+
+    case $command in
+        new)
+            echo "Usage: buildstorage new [OPTIONS]"
+            echo
+            echo "Create a new PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
+            echo "Options:"
+            echo "  -n, --name NAME       Name for the PV and PVC. The created PV will have '-pv' appended, and the PVC will have '-pvc' appended."
+            echo "  -s, --size SIZE       Size for the PV and PVC (e.g., 50Gi)."
+            echo "  -h, --help            Display this help message and exit."
+            echo
+            echo "Example:"
+            echo "  buildstorage new --name myresource --size 50Gi"
+            ;;
+        
+        resync)
+            echo "Usage: buildstorage resync"
+            echo
+            echo "Scan every PVC in the current namespace. If a PVC does not have an associated PV, create a PV with the foobar storage class. The PV will match the size of the PVC."
+            echo
+            echo "Example:"
+            echo "  buildstorage resync"
+            ;;
+
+        *)
+            echo "Usage: buildstorage COMMAND [OPTIONS]"
+            echo
+            echo "Commands:"
+            echo "  new                   Create a new PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
+            echo "  resync                Scan every PVC in the namespace. If a PVC does not have an associated PV, create a PV with the same size."
+            echo "  -h, --help            Display this help message and exit."
+            ;;
+    esac
     exit 0
 }
 
-# Default values
-NAME=""
-SIZE=""
+function process_new_command() {
+    # Default values
+    NAME=""
+    SIZE=""
 
-# Trap to handle script interruptions
-trap "echo 'Script interrupted.'; exit 1" SIGINT SIGTERM
+    # Parse command line arguments for 'new' command
+    while [[ "$#" -gt 0 ]]; do
+        case $1 in
+            -n|--name) NAME="$2"; shift ;;
+            -s|--size) SIZE=$(echo "$2" | tr '[:upper:]' '[:lower:]'); shift ;;
+            -h|--help) display_help "new" ;;
+            *) echo "Unknown parameter passed: $1"; exit 1 ;;
+        esac
+        shift
+    done
 
-# Parse command line arguments
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        -n|--name) NAME="$2"; shift ;;
-        -s|--size) SIZE=$(echo "$2" | tr '[:upper:]' '[:lower:]'); shift ;;
-        -h|--help) display_help ;;
-        *) echo "Unknown parameter passed: $1"; exit 1 ;;
-    esac
-    shift
-done
-
-# Check if oc command exists
-if ! command -v oc &> /dev/null; then
-    echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
-    exit 1
-fi
-
-# Validate inputs
-if [[ -z "${NAME}" && -z "${SIZE}" ]]; then
-    echo "Usage: $0 --name <name> --size <size>"
-    exit 1
-elif [[ -z "${NAME}" ]]; then
-    echo "Error: Missing name. Please provide a name using --name or -n flag. Consult 'buildstorage -h' for more info."
-    exit 1
-elif [[ -z "${SIZE}" ]]; then
-    echo "Error: Missing size. Please provide a size using --size or -s flag. Consult 'buildstorage -h' for more info."
-    exit 1
-fi
-
-# Check if user is logged into an OpenShift cluster
-if ! oc whoami &> /dev/null; then
-    echo "You are not logged into an OpenShift cluster."
-    read -p "Would you like to log in now? (y/n) " choice
-    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
-        oc login
-        if [ $? -ne 0 ]; then
-            echo "Login failed. Exiting."
-            exit 1
-        fi
-    else
-        echo "Please log in and try again."
+    # Validate inputs
+    if [[ -z "${NAME}" && -z "${SIZE}" ]]; then
+        echo "Usage: buildstorage new --name <name> --size <size>"
+        exit 1
+    elif [[ -z "${NAME}" ]]; then
+        echo "Error: Missing name. Please provide a name using --name or -n flag. Consult 'buildstorage -h' for more info."
+        exit 1
+    elif [[ -z "${SIZE}" ]]; then
+        echo "Error: Missing size. Please provide a size using --size or -s flag. Consult 'buildstorage -h' for more info."
         exit 1
     fi
-fi
 
-# Validate name
-if [[ ! "${NAME}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
-    echo "Invalid name. Must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character."
-    exit 1
-fi
-
-# Ensure name isn't too long (maximum valid length for resource names in Kubernetes is 253 characters)
-if [[ ${#NAME} -gt 253 ]]; then
-    echo "Name is too long. Maximum length is 253 characters."
-    exit 1
-fi
-
-# Validate and normalize size
-if [[ "${SIZE}" =~ ^([0-9]+)([kKmMgG])([iI]?)([bB]?)$ ]]; then
-    VALUE="${BASH_REMATCH[1]}"
-    UNIT="${BASH_REMATCH[2]}"
-    I_SUFFIX="${BASH_REMATCH[3]}"
-
-    case "${UNIT}${I_SUFFIX}" in
-        [kK]|[kK][iI]|[kK][bB]) SIZE="${VALUE}Ki" ;;
-        [mM]|[mM][iI]|[mM][bB]) SIZE="${VALUE}Mi" ;;
-        [gG]|[gG][iI]|[gG][bB]) SIZE="${VALUE}Gi" ;;
-        *) 
-            echo "Invalid size unit."
-            exit 1
-            ;;
-    esac
-else
-    echo "Invalid size. Must be a positive number followed by a valid size unit (K, KB, Ki, M, MB, Mi, G, GB, Gi)."
-    exit 1
-fi
-
-# Check if the provided storage class exists
-if ! oc get sc foobar &> /dev/null; then
-    echo "Error: The 'foobar' storage class does not exist in the cluster."
-    exit 1
-fi
-
-# Check if a PV with the given name already exists
-if oc get pv "${NAME}-pv" &> /dev/null; then
-    echo "Error: A PersistentVolume with the name '${NAME}-pv' already exists."
-    exit 1
-fi
-
-# Check if a PVC with the given name already exists
-if oc get pvc "${NAME}-pvc" &> /dev/null; then
-    echo "Error: A PersistentVolumeClaim with the name '${NAME}-pvc' already exists."
-    exit 1
-fi
-
-# Create PV and PVC using oc command and handle potential errors
-if ! OUTPUT=$(oc apply -f - <<EOF
+    # Validate name
+    if [[ ! "${NAME}" =~ ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ ]]; then
+        echo "Invalid name. Must consist of lower case alphanumeric characters or '-', and must start and end with an alphanumeric character."
+        exit 1
+    fi
+    
+    # Ensure name isn't too long (maximum valid length for resource names in Kubernetes is 253 characters)
+    if [[ ${#NAME} -gt 253 ]]; then
+        echo "Name is too long. Maximum length is 253 characters."
+        exit 1
+    fi
+    
+    # Validate and normalize size
+    if [[ "${SIZE}" =~ ^([0-9]+)([kKmMgG])([iI]?)([bB]?)$ ]]; then
+        VALUE="${BASH_REMATCH[1]}"
+        UNIT="${BASH_REMATCH[2]}"
+        I_SUFFIX="${BASH_REMATCH[3]}"
+    
+        case "${UNIT}${I_SUFFIX}" in
+            [kK]|[kK][iI]|[kK][bB]) SIZE="${VALUE}Ki" ;;
+            [mM]|[mM][iI]|[mM][bB]) SIZE="${VALUE}Mi" ;;
+            [gG]|[gG][iI]|[gG][bB]) SIZE="${VALUE}Gi" ;;
+            *) 
+                echo "Invalid size unit."
+                exit 1
+                ;;
+        esac
+    else
+        echo "Invalid size. Must be a positive number followed by a valid size unit (K, KB, Ki, M, MB, Mi, G, GB, Gi)."
+        exit 1
+    fi
+    
+    # Check if the provided storage class exists
+    if ! oc get sc foobar &> /dev/null; then
+        echo "Error: The 'foobar' storage class does not exist in the cluster."
+        exit 1
+    fi
+    
+    # Check if a PV with the given name already exists
+    if oc get pv "${NAME}-pv" &> /dev/null; then
+        echo "Error: A PersistentVolume with the name '${NAME}-pv' already exists."
+        exit 1
+    fi
+    
+    # Check if a PVC with the given name already exists
+    if oc get pvc "${NAME}-pvc" &> /dev/null; then
+        echo "Error: A PersistentVolumeClaim with the name '${NAME}-pvc' already exists."
+        exit 1
+    fi
+    
+    # Create PV and PVC using oc command and handle potential errors
+    if ! OUTPUT=$(oc apply -f - <<EOF
 apiVersion: v1
 kind: PersistentVolume
 metadata:
@@ -166,12 +165,101 @@ spec:
       storage: ${SIZE}
   storageClassName: foobar
   volumeName: ${NAME}-pv
-
+    
 EOF
-); then
-    echo "Error applying the configuration:"
-    echo "${OUTPUT}"
+    ); then
+        echo "Error applying the configuration:"
+        echo "${OUTPUT}"
+        exit 1
+    fi
+    
+    echo "PV and PVC created successfully!"
+}
+
+function process_resync_command() {
+    # Get list of PVCs in the current namespace
+    PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.volumeName}{"\n"}{end}')
+
+    # Process each PVC
+    while read -r pvc_name pvc_size pvc_volume; do
+        if [ -z "$pvc_volume" ]; then
+            echo "PVC $pvc_name does not have an associated PV. Creating a PV..."
+            
+            # Create a PV for the PVC with a specific label
+            oc apply -f - <<EOF
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: ${pvc_name}-pv
+  labels:
+    storage.openshift.com/local-volume-owner-name: foobar
+    intended-for-pvc: $pvc_name
+spec:
+  capacity:
+    storage: $pvc_size
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Delete
+  storageClassName: foobar
+  local:
+    path: /path/to/storage/directory
+  volumeMode: Filesystem
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ac-1f-6b-73-2d-c7
+EOF
+
+        fi
+    done <<< "$PVCs"
+}
+
+# Check if oc command exists
+if ! command -v oc &> /dev/null; then
+    echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
     exit 1
 fi
 
-echo "PV and PVC created successfully!"
+# Trap to handle script interruptions
+trap "echo 'Script interrupted.'; exit 1" SIGINT SIGTERM
+
+# Check if user is logged into an OpenShift cluster
+if ! oc whoami &> /dev/null; then
+    echo "You are not logged into an OpenShift cluster."
+    read -p "Would you like to log in now? (y/n) " choice
+    if [[ "$choice" == "y" || "$choice" == "Y" ]]; then
+        oc login
+        if [ $? -ne 0 ]; then
+            echo "Login failed. Exiting."
+            exit 1
+        fi
+    else
+        echo "Please log in and try again."
+        exit 1
+    fi
+fi
+
+# Check the provided command or if --help/-h is directly passed
+if [[ "$#" -eq 0 ]]; then
+    echo "Error: No command provided."
+    display_help
+    exit 1
+fi
+
+if [[ "$1" == "--help" || "$1" == "-h" ]]; then
+    display_help
+    exit 0
+fi
+
+COMMAND="$1"
+shift  # Remove command from the list of arguments
+
+case $COMMAND in
+    new) process_new_command "$@" ;;
+    resync) process_resync_command ;;
+    *) echo "Unknown command: $COMMAND"; exit 1 ;;
+esac
