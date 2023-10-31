@@ -233,6 +233,14 @@ spec:
     storage: $pvc_size
   accessModes:
     - ${pvc_access_mode_string}
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - ac-1f-6b-73-2d-c7
   persistentVolumeReclaimPolicy: Delete
   storageClassName: foobar
   local:
