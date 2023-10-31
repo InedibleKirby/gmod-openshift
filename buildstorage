@@ -4,6 +4,15 @@ function display_help() {
     local command="$1"
 
     case $command in
+        setup)
+            echo "Usage: buildstorage setup"
+            echo
+            echo "Setup environment variables for buildstorage."
+            echo
+            echo "Example:"
+            echo "  buildstorage setup"
+            ;;
+
         new)
             echo "Usage: buildstorage new [OPTIONS]"
             echo
@@ -30,12 +39,23 @@ function display_help() {
             echo "Usage: buildstorage COMMAND [OPTIONS]"
             echo
             echo "Commands:"
+            echo "  setup                 Setup environment variables for buildstorage. Must be run BEFORE any other commands such as new or resync"
             echo "  new                   Create a new PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
             echo "  resync                Scan every PVC in the namespace. If a PVC does not have an associated PV, create a PV with the same size."
             echo "  -h, --help            Display this help message and exit."
             ;;
     esac
     exit 0
+}
+
+function process_setup_command() {
+    echo "Setting up environment variables for buildstorage."
+
+    # Prompt for StorageClass Name
+    read -p "Enter StorageClass Name: " storage_class_name
+    export STORAGE_CLASS_NAME="$storage_class_name"
+
+    echo "Environment variable STORAGE_CLASS_NAME set to $STORAGE_CLASS_NAME"
 }
 
 function process_new_command() {
@@ -286,11 +306,20 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     exit 0
 fi
 
+# Check if STORAGE_CLASS_NAME is set
+if [[ -z "$STORAGE_CLASS_NAME" ]] && [[ "$1" != "setup" ]]; then
+    echo "StorageClass is not set. Please run 'buildstorage setup' first."
+    exit 1
+fi
+
 COMMAND="$1"
 shift  # Remove command from the list of arguments
 
 case $COMMAND in
+    setup) process_setup_command ;;
     new) process_new_command "$@" ;;
     resync) process_resync_command ;;
-    *) echo "Unknown command: $COMMAND"; exit 1 ;;
+    *) echo "Unknown command: $COMMAND"; exit 1 
+       echo "Usage: buildstorage [setup|new|resync] [--help]"
+       exit 1 ;;
 esac
