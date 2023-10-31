@@ -83,10 +83,10 @@ function process_setup_command() {
     echo "STORAGE_CLASS_DEVICE_NAME='$input_storage_class_device_name'" >> "$config_file"
     echo "Storage class set to: $input_storage_class_device_name"
 
-    # StorageClass Path
+    # StorageClass Mount Path
     # Write the STORAGE_CLASS_PATH to the config file
     echo "STORAGE_CLASS_PATH='/mnt/local-storage/$input_storage_class/$input_storage_class_device_name'" >> "$config_file"
-    echo "Storage class set to: /mnt/local-storage/$input_storage_class/$input_storage_class_device_name"
+    echo "Storage class mount path set to: /mnt/local-storage/$input_storage_class/$input_storage_class_device_name"
 
 
     source ./buildstorage.conf
