@@ -49,13 +49,19 @@ function display_help() {
 }
 
 function process_setup_command() {
-    echo "Setting up environment variables for buildstorage."
+    local input_storage_class
 
-    # Prompt for StorageClass Name
-    read -p "Enter StorageClass Name: " storage_class_name
-    export STORAGE_CLASS_NAME="$storage_class_name"
+    echo "Enter the name of the StorageClass:"
+    read input_storage_class
 
-    echo "Environment variable STORAGE_CLASS_NAME set to $STORAGE_CLASS_NAME"
+    # Validate the entered storage class
+    if is_valid_storage_class "$input_storage_class"; then
+        export STORAGE_CLASS_NAME="$input_storage_class"
+        echo "Storage class set to: $STORAGE_CLASS_NAME"
+    else
+        echo "Error: Invalid StorageClass name. Please enter a valid StorageClass name."
+        return 1 # Return error code to indicate failure
+    fi
 }
 
 function process_new_command() {
@@ -267,6 +273,21 @@ spec:
     path: /path/to/storage/directory
   volumeMode: Filesystem
 EOF
+}
+
+function is_valid_storage_class() {
+    local input_storage_class=$1
+    local valid_classes
+
+    # Fetch all available storage classes
+    valid_classes=$(oc get storageclass -o=jsonpath='{.items[*].metadata.name}')
+
+    # Check if the input is in the list of valid storage classes
+    if [[ $valid_classes =~ (^|[[:space:]])$input_storage_class($|[[:space:]]) ]]; then
+        return 0 # 0 is success in bash, meaning the storage class is valid
+    else
+        return 1 # Non-zero return value indicates failure/validation error
+    fi
 }
 
 # Check if oc command exists
