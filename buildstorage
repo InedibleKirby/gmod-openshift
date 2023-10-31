@@ -42,7 +42,7 @@ function display_help() {
             echo "  setup                 Setup environment variables for buildstorage. Must be run BEFORE any other commands such as new or resync"
             echo "  new                   Create a new PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
             echo "  resync                Scan every PVC in the namespace. If a PVC does not have an associated PV, create a PV with the same size."
-	    echo "  settings     	  Display the current value of evironment variables.
+	    echo "  settings     	  Display the current value of evironment variables."
             echo "  -h, --help            Display this help message and exit."
             ;;
     esac
