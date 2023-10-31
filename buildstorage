@@ -192,14 +192,19 @@ function process_resync_command() {
 
     # Get list of PVCs in the current namespace
     PVCs=$(oc get pvc -o=jsonpath='{range .items[*]}{.metadata.name} {.spec.resources.requests.storage} {.spec.accessModes} {.spec.volumeName} {"\n"}{end}')
+
     # Process each PVC
     while read -r pvc_name pvc_size pvc_access_mode pvc_volume; do   
         if [ -z "$pvc_volume" ]; then
             echo "PVC $pvc_name does not have an associated PV. Attempting to create a PV..."
+			
+			printf -v pvc_access_mode_string "%s\n" "${pvc_access_mode[@]}"
+			pvc_access_mode_string=${pvc_access_mode_string%?:}
+			pvc_access_mode_string=$(echo $pvc_access_mode_string  | cut -c3- | rev | cut -c3- | rev)
             
             # Create a PV for the PVC
             pv_name="${pvc_name}-pv"
-            if create_pv_for_pvc $pv_name $pvc_size $pvc_access_mode; then
+            if create_pv_for_pvc $pv_name $pvc_size $pvc_access_mode_string; then
                 # Update PVC with volumeName set to the new PV
                 oc patch pvc $pvc_name -p '{"spec":{"volumeName":"'$pv_name'"}}'
                 echo "PVC $pvc_name updated to bind to PV $pv_name."
@@ -213,7 +218,7 @@ function process_resync_command() {
 function create_pv_for_pvc() {
     local pv_name="$1"
     local pvc_size="$2"
-    local pvc_access_mode="$3"
+    local pvc_access_mode_string="$3"
 
     # Create a PV for the PVC with a specific label
     oc apply -f - <<EOF
@@ -227,7 +232,7 @@ spec:
   capacity:
     storage: $pvc_size
   accessModes:
-    - ${pvc_access_mode[0]}
+    - ${pvc_access_mode_string}
   persistentVolumeReclaimPolicy: Delete
   storageClassName: foobar
   local:
