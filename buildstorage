@@ -1,6 +1,6 @@
 #!/bin/bash
 
-STORAGE_CLASS_NAME=""
+source ./buildstorage.conf
 
 function display_help() {
     local command="$1"
@@ -52,17 +52,28 @@ function display_help() {
 }
 
 function process_setup_command() {
+    local input_storage_class
+    local config_file="./buildstorage.conf"
+
     echo "Enter the name of the StorageClass:"
     read input_storage_class
 
     # Validate the entered storage class
     if is_valid_storage_class "$input_storage_class"; then
-        STORAGE_CLASS_NAME="$input_storage_class"  # Set the script-level variable
-        echo "Storage class set to: $STORAGE_CLASS_NAME"
+        # Check if config file exists. If not, create it.
+        if [ ! -f "$config_file" ]; then
+            touch "$config_file"
+        fi
+
+        # Write the STORAGE_CLASS_NAME to the config file
+        echo "STORAGE_CLASS_NAME='$input_storage_class'" > "$config_file"
+        echo "Storage class set to: $input_storage_class"
     else
         echo "Error: Invalid StorageClass name. Please enter a valid StorageClass name."
         return 1
     fi
+
+    source ./buildstorage.conf
 }
 
 function process_settings_command() {
