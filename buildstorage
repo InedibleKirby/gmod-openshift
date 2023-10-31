@@ -1,5 +1,7 @@
 #!/bin/bash
 
+STORAGE_CLASS_NAME=""
+
 function display_help() {
     local command="$1"
 
@@ -50,18 +52,16 @@ function display_help() {
 }
 
 function process_setup_command() {
-    local input_storage_class
-
     echo "Enter the name of the StorageClass:"
     read input_storage_class
 
     # Validate the entered storage class
     if is_valid_storage_class "$input_storage_class"; then
-        export STORAGE_CLASS_NAME="$input_storage_class"
+        STORAGE_CLASS_NAME="$input_storage_class"  # Set the script-level variable
         echo "Storage class set to: $STORAGE_CLASS_NAME"
     else
         echo "Error: Invalid StorageClass name. Please enter a valid StorageClass name."
-        return 1 # Return error code to indicate failure
+        return 1
     fi
 }
 
@@ -297,6 +297,14 @@ function is_valid_storage_class() {
     fi
 }
 
+function are_envs_set() {
+    # Check if STORAGE_CLASS_NAME is set
+    if [[ -z "$STORAGE_CLASS_NAME" ]] && [[ "$1" != "setup" ]]; then
+	echo "StorageClass is not set. Please run 'buildstorage setup' first."
+	exit 1
+    fi
+}
+
 # Check if oc command exists
 if ! command -v oc &> /dev/null; then
     echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
@@ -334,19 +342,27 @@ if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     exit 0
 fi
 
-# Check if STORAGE_CLASS_NAME is set
-if [[ -z "$STORAGE_CLASS_NAME" ]] && [[ "$1" != "setup" ]]; then
-    echo "StorageClass is not set. Please run 'buildstorage setup' first."
-    exit 1
-fi
-
 COMMAND="$1"
 shift  # Remove command from the list of arguments
 
 case $COMMAND in
     setup) process_setup_command ;;
-    new) process_new_command "$@" ;;
-    resync) process_resync_command ;;
+    new) 
+        if are_envs_set; then
+            process_new_command "$@"
+        else
+            echo "Environment variables are not set. Please run 'buildstorage setup'."
+            exit 1
+        fi
+        ;;
+    resync) 
+        if are_envs_set; then
+            process_resync_command
+        else
+            echo "Environment variables are not set. Please run 'buildstorage setup'."
+            exit 1
+        fi
+        ;;
     settings) process_settings_command ;;
     *) echo "Unknown command: $COMMAND"; exit 1 
        echo "Usage: buildstorage [setup|new|resync] [--help]"
