@@ -290,7 +290,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: $STORAGE_CLASS_NAME
   local:
-    path: /path/to/storage/directory
+    path: /mnt/local-storage/$STORAGE_CLASS_NAME/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
   volumeMode: Filesystem
 EOF
 }
