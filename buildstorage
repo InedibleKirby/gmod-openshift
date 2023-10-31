@@ -1,6 +1,8 @@
 #!/bin/bash
 
-source ./buildstorage.conf
+#
+# Start of function definition
+#
 
 function display_help() {
     local command="$1"
@@ -316,6 +318,12 @@ function are_envs_set() {
     fi
 }
 
+#
+# Start of script logic
+#
+
+config_file="./buildstorage.conf"
+
 # Check if oc command exists
 if ! command -v oc &> /dev/null; then
     echo "The 'oc' command is not found. Please ensure you have the OpenShift CLI installed."
@@ -351,6 +359,22 @@ fi
 if [[ "$1" == "--help" || "$1" == "-h" ]]; then
     display_help
     exit 0
+fi
+
+# Check if the configuration file exists and source it
+if [ -f "$config_file" ]; then
+    source "$config_file"
+else
+    echo "Configuration file not found. Running setup..."
+    process_setup_command
+
+    # Source the newly created configuration file
+    if [ -f "$config_file" ]; then
+        source "$config_file"
+    else
+        echo "Error: Configuration file could not be created."
+        exit 1
+    fi
 fi
 
 COMMAND="$1"
