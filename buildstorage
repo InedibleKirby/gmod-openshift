@@ -8,9 +8,6 @@ function display_help() {
             echo "Usage: buildstorage setup"
             echo
             echo "Setup environment variables for buildstorage."
-            echo
-            echo "Example:"
-            echo "  buildstorage setup"
             ;;
 
         new)
@@ -30,9 +27,12 @@ function display_help() {
             echo "Usage: buildstorage resync"
             echo
             echo "Scan every PVC in the current namespace. If a PVC does not have an associated PV, create a PV with the storage class environment variable. The PV will match the size of the PVC."
+            ;;
+
+	settings)
+            echo "Usage: buildstorage settings"
             echo
-            echo "Example:"
-            echo "  buildstorage resync"
+            echo "Displays the current settings of environment variables set by buildstorage setup."
             ;;
 
         *)
@@ -42,6 +42,7 @@ function display_help() {
             echo "  setup                 Setup environment variables for buildstorage. Must be run BEFORE any other commands such as new or resync"
             echo "  new                   Create a new PersistentVolume (PV) and PersistentVolumeClaim (PVC) in OpenShift."
             echo "  resync                Scan every PVC in the namespace. If a PVC does not have an associated PV, create a PV with the same size."
+	    echo "  settings     	  Display the current value of evironment variables.
             echo "  -h, --help            Display this help message and exit."
             ;;
     esac
@@ -62,6 +63,12 @@ function process_setup_command() {
         echo "Error: Invalid StorageClass name. Please enter a valid StorageClass name."
         return 1 # Return error code to indicate failure
     fi
+}
+
+function process_settings_command() {
+    echo "Current BuildStorage Environment Settings:"
+    echo "Storage Class Name: ${STORAGE_CLASS_NAME:-Not Set}"
+    # Add similar lines for other environment variables if they exist
 }
 
 function process_new_command() {
@@ -340,6 +347,7 @@ case $COMMAND in
     setup) process_setup_command ;;
     new) process_new_command "$@" ;;
     resync) process_resync_command ;;
+    settings) process_settings_command ;;
     *) echo "Unknown command: $COMMAND"; exit 1 
        echo "Usage: buildstorage [setup|new|resync] [--help]"
        exit 1 ;;
