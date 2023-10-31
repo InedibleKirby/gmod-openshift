@@ -29,7 +29,7 @@ function display_help() {
         resync)
             echo "Usage: buildstorage resync"
             echo
-            echo "Scan every PVC in the current namespace. If a PVC does not have an associated PV, create a PV with the foobar storage class. The PV will match the size of the PVC."
+            echo "Scan every PVC in the current namespace. If a PVC does not have an associated PV, create a PV with the storage class environment variable. The PV will match the size of the PVC."
             echo
             echo "Example:"
             echo "  buildstorage resync"
@@ -119,8 +119,8 @@ function process_new_command() {
     fi
     
     # Check if the provided storage class exists
-    if ! oc get sc foobar &> /dev/null; then
-        echo "Error: The 'foobar' storage class does not exist in the cluster."
+    if ! oc get sc $STORAGE_CLASS_NAME &> /dev/null; then
+        echo "Error: The '$STORAGE_CLASS_NAME' storage class does not exist in the cluster."
         exit 1
     fi
     
@@ -144,10 +144,10 @@ metadata:
   name: ${NAME}-pv
   labels:
     kubernetes.io/hostname: ac-1f-6b-73-2d-c7
-    storage.openshift.com/local-volume-owner-name: foobar
+    storage.openshift.com/local-volume-owner-name: $STORAGE_CLASS_NAME
     storage.openshift.com/local-volume-owner-namespace: openshift-local-storage
     storage.openshift.com/owner-kind: LocalVolume
-    storage.openshift.com/owner-name: foobar
+    storage.openshift.com/owner-name: $STORAGE_CLASS_NAME
     storage.openshift.com/owner-namespace: openshift-local-storage
   annotations:
     pv.kubernetes.io/provisioned-by: local-volume-provisioner-ac-1f-6b-73-2d-c7
@@ -157,12 +157,12 @@ spec:
   capacity:
     storage: ${SIZE}
   local:
-    path: /mnt/local-storage/foobar/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
+    path: /mnt/local-storage/$STORAGE_CLASS_NAME/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
     fsType: ext4
   accessModes:
     - ReadWriteOnce
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: foobar
+  storageClassName: $STORAGE_CLASS_NAME
   volumeMode: Filesystem
   nodeAffinity:
     required:
@@ -183,7 +183,7 @@ spec:
   resources:
     requests:
       storage: ${SIZE}
-  storageClassName: foobar
+  storageClassName: $STORAGE_CLASS_NAME
   volumeName: ${NAME}-pv
     
 EOF
@@ -247,7 +247,7 @@ kind: PersistentVolume
 metadata:
   name: ${pv_name}
   labels:
-    storage.openshift.com/local-volume-owner-name: foobar
+    storage.openshift.com/local-volume-owner-name: $STORAGE_CLASS_NAME
 spec:
   capacity:
     storage: $pvc_size
@@ -262,7 +262,7 @@ spec:
               values:
                 - ac-1f-6b-73-2d-c7
   persistentVolumeReclaimPolicy: Delete
-  storageClassName: foobar
+  storageClassName: $STORAGE_CLASS_NAME
   local:
     path: /path/to/storage/directory
   volumeMode: Filesystem
