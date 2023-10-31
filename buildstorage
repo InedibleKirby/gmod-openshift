@@ -75,13 +75,21 @@ function process_setup_command() {
         return 1
     fi
 
+    # Storage class path variable
+    echo "Enter the location of the storage class path:"
+    read input_storage_class_path
+
+    # Write the STORAGE_CLASS_PATH to the config file
+    echo "STORAGE_CLASS_PATH='$input_storage_class_path'" >> "$config_file"
+    echo "Storage class set to: $input_storage_class_path"
+
     source ./buildstorage.conf
 }
 
 function process_settings_command() {
     echo "Current BuildStorage Environment Settings:"
     echo "Storage Class Name: ${STORAGE_CLASS_NAME:-Not Set}"
-    # Add similar lines for other environment variables if they exist
+    echo "Storage Class Path: ${STORAGE_CLASS_PATH:-Not Set}"
 }
 
 function process_new_command() {
@@ -183,7 +191,7 @@ spec:
   capacity:
     storage: ${SIZE}
   local:
-    path: /mnt/local-storage/$STORAGE_CLASS_NAME/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
+    path: $STORAGE_CLASS_PATH
     fsType: ext4
   accessModes:
     - ReadWriteOnce
@@ -290,7 +298,7 @@ spec:
   persistentVolumeReclaimPolicy: Delete
   storageClassName: $STORAGE_CLASS_NAME
   local:
-    path: /mnt/local-storage/$STORAGE_CLASS_NAME/nvme-Samsung_SSD_980_PRO_2TB_S6B0NL0W312900F
+    path: $STORAGE_CLASS_PATH
   volumeMode: Filesystem
 EOF
 }
